@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 
+import authRoutes from "./routes/auth.routes.js";
+import errorMiddleware from "./middleware/error.middleware.js";
+
 const app = express();
 
 app.use(helmet());
@@ -22,5 +25,8 @@ app.get("/api/health", (req, res) => {
     message: "TasteHub API is running",
   });
 });
+
+app.use("/api/auth", authRoutes);
+app.use(errorMiddleware);
 
 export default app;
