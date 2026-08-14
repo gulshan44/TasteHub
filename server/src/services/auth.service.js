@@ -13,6 +13,16 @@ import User from "../models/User.js";
 import Restaurant from "../models/Restaurant.js";
 import Membership from "../models/Membership.js";
 
+const getRefreshTokenExpiry = () => {
+    const days = Number(
+        process.env.REFRESH_TOKEN_EXPIRES_DAYS || 7
+    );
+
+    return new Date(
+        Date.now() + days * 24 * 60 * 60 * 1000
+    );
+};
+
 export const registerUser = async ({
     name,
     email,
@@ -136,9 +146,7 @@ export const loginUser = async ({ email, password }) => {
     await RefreshToken.create({
         user: user._id,
         tokenHash,
-        expiresAt: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-        ),
+        expiresAt: getRefreshTokenExpiry(),
     });
 
     return {
@@ -197,6 +205,13 @@ export const refreshAccessToken = async (refreshToken) => {
         throw new ApiError(401, "User not found");
     }
 
+    if (user.status !== "ACTIVE") {
+        throw new ApiError(
+            403,
+            "User account is not active"
+        );
+    }
+
     // Revoke old refresh token
     storedToken.revokedAt = new Date();
     await storedToken.save();
@@ -204,6 +219,7 @@ export const refreshAccessToken = async (refreshToken) => {
     // Generate new tokens
     const newAccessToken = generateAccessToken({
         userId: user._id.toString(),
+        role: user.role,
     });
 
     const newRefreshToken = generateRefreshToken();
@@ -213,9 +229,7 @@ export const refreshAccessToken = async (refreshToken) => {
     await RefreshToken.create({
         user: user._id,
         tokenHash: newTokenHash,
-        expiresAt: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-        ),
+        expiresAt: getRefreshTokenExpiry(),
     });
 
     return {
@@ -223,7 +237,6 @@ export const refreshAccessToken = async (refreshToken) => {
         refreshToken: newRefreshToken,
     };
 };
-
 
 export const logoutUser = async (refreshToken) => {
     if (!refreshToken) {

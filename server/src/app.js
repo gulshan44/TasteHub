@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 
 import authRoutes from "./routes/auth.routes.js";
+import restaurantRoutes from "./routes/restaurant.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 
 const app = express();
@@ -27,6 +28,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/restaurants", restaurantRoutes);
 app.use(errorMiddleware);
 
 export default app;

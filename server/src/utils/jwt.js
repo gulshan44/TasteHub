@@ -11,7 +11,7 @@ const getJwtSecret = () => {
 
 export const generateAccessToken = (payload) => {
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: "15m",
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m",
   });
 };
 

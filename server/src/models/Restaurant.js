@@ -2,12 +2,19 @@ import mongoose from "mongoose";
 
 const restaurantSchema = new mongoose.Schema(
     {
+        owner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true,
+        },
+
         name: {
             type: String,
             required: true,
             trim: true,
             minlength: 2,
-            maxlength: 150,
+            maxlength: 100,
         },
 
         slug: {
@@ -16,6 +23,7 @@ const restaurantSchema = new mongoose.Schema(
             unique: true,
             lowercase: true,
             trim: true,
+            index: true,
         },
 
         description: {
@@ -24,10 +32,13 @@ const restaurantSchema = new mongoose.Schema(
             maxlength: 1000,
         },
 
-        logo: {
-            type: String,
-            default: null,
-        },
+        cuisines: [
+            {
+                type: String,
+                trim: true,
+                lowercase: true,
+            },
+        ],
 
         phone: {
             type: String,
@@ -36,19 +47,123 @@ const restaurantSchema = new mongoose.Schema(
 
         email: {
             type: String,
-            lowercase: true,
             trim: true,
+            lowercase: true,
         },
 
         address: {
+            street: {
+                type: String,
+                trim: true,
+            },
+
+            city: {
+                type: String,
+                trim: true,
+            },
+
+            state: {
+                type: String,
+                trim: true,
+            },
+
+            postalCode: {
+                type: String,
+                trim: true,
+            },
+
+            country: {
+                type: String,
+                trim: true,
+                default: "India",
+            },
+        },
+
+        location: {
+            type: {
+                type: String,
+                enum: ["Point"],
+                default: "Point",
+            },
+
+            coordinates: {
+                type: [Number],
+                default: undefined,
+            },
+        },
+
+        images: [
+            {
+                type: String,
+                trim: true,
+            },
+        ],
+
+        openingHours: [
+            {
+                day: {
+                    type: String,
+                    enum: [
+                        "monday",
+                        "tuesday",
+                        "wednesday",
+                        "thursday",
+                        "friday",
+                        "saturday",
+                        "sunday",
+                    ],
+                    required: true,
+                },
+
+                open: {
+                    type: String,
+                    trim: true,
+                },
+
+                close: {
+                    type: String,
+                    trim: true,
+                },
+
+                isClosed: {
+                    type: Boolean,
+                    default: false,
+                },
+            },
+        ],
+
+        priceRange: {
             type: String,
-            trim: true,
+            enum: ["$", "$$", "$$$", "$$$$"],
+            default: "$$",
         },
 
         status: {
             type: String,
-            enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
-            default: "ACTIVE",
+            enum: ["pending", "approved", "rejected", "suspended"],
+            default: "pending",
+            index: true,
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true,
+            index: true,
+        },
+
+        rating: {
+            average: {
+                type: Number,
+                default: 0,
+                min: 0,
+                max: 5,
+            },
+
+            count: {
+                type: Number,
+                default: 0,
+                min: 0,
+            },
         },
     },
     {
@@ -56,6 +171,19 @@ const restaurantSchema = new mongoose.Schema(
     }
 );
 
-const Restaurant = mongoose.model("Restaurant", restaurantSchema);
+restaurantSchema.index({
+    location: "2dsphere",
+});
+
+restaurantSchema.index({
+    name: "text",
+    description: "text",
+    cuisines: "text",
+});
+
+const Restaurant = mongoose.model(
+    "Restaurant",
+    restaurantSchema
+);
 
 export default Restaurant;
